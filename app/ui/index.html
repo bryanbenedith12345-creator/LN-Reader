@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en" data-theme="cupertino">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LN Reader</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a1a1e'/%3E%3Cpath d='M10 7h9a3 3 0 0 1 3 3v15l-6-3.6L10 25V7z' fill='%230a84ff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-library" viewBox="0 0 24 24"><path d="M4 4.5h4.5v15H4zM10.5 4.5H15v15h-4.5zM17.2 5.2l3.5 1.1-4.1 14-3.4-1.1z"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M4 20h5l9.4-9.4a2.2 2.2 0 0 0 0-3.1l-2-2a2.2 2.2 0 0 0-3.1 0L4 15z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.3"/><path d="M15.6 15.6 20 20"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.1"/><circle cx="9" cy="16" r="2.1"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2h9.2L17.5 7"/><path d="M10.2 10.5v5.6M13.8 10.5v5.6"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M7 4.5h10v15l-5-3.4-5 3.4z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10.5M8 10.5l4 4 4-4M5 19h14"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4.5M8 8.5l4-4 4 4M5 19h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.4"/><path d="M7 10h.01M10.5 10h.01M14 10h.01M17.5 10h.01M8 14h8"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark"><svg><use href="#i-bookmark"/></svg></span>
+      <div class="brand-text"><strong>LN Reader</strong><small>Light novel library</small></div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-btn is-active" data-view="library"><svg><use href="#i-library"/></svg><span>Library</span><em id="navCount"></em></button>
+      <button class="nav-btn" data-view="highlights"><svg><use href="#i-mark"/></svg><span>Highlights</span><em id="hlNavCount"></em></button>
+    </nav>
+
+    <div class="side-spacer"></div>
+
+    <div class="side-block">
+      <div class="side-title">Appearance</div>
+      <button class="side-btn theme-toggle" id="btnSepia" title="Switch to the sepia reading theme (S)">
+        <svg><use href="#i-sun"/></svg><span>Sepia theme</span>
+      </button>
+    </div>
+
+    <div class="side-block">
+      <div class="side-title">Library data</div>
+      <button class="side-btn" id="btnBackup"><svg><use href="#i-download"/></svg>Back up everything</button>
+      <button class="side-btn" id="btnRestore"><svg><use href="#i-upload"/></svg>Restore backup</button>
+      <button class="side-btn" id="btnShortcuts"><svg><use href="#i-keyboard"/></svg>Keyboard shortcuts</button>
+      <input type="file" id="fileBackup" accept=".zip,application/zip" hidden>
+    </div>
+
+    <div class="side-foot" id="sideFoot"></div>
+  </aside>
+
+  <main class="main" id="main">
+    <!-- Library -->
+    <section class="view is-active" id="view-library">
+      <header class="page-head">
+        <div class="head-text">
+          <h1>Library</h1>
+          <p id="libSub">Your shelf</p>
+        </div>
+        <div class="head-actions">
+          <label class="field search">
+            <svg><use href="#i-search"/></svg>
+            <input id="libSearch" type="search" placeholder="Search books" autocomplete="off" spellcheck="false">
+          </label>
+          <select class="select" id="libSort" aria-label="Sort library">
+            <option value="recent">Recently read</option>
+            <option value="added">Recently added</option>
+            <option value="title">Title</option>
+            <option value="author">Author</option>
+            <option value="progress">Progress</option>
+          </select>
+          <button class="btn primary" id="btnAdd"><svg><use href="#i-plus"/></svg>Add books</button>
+          <input type="file" id="fileEpub" accept=".epub,application/epub+zip" multiple hidden>
+        </div>
+      </header>
+
+      <div id="continueWrap"></div>
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" hidden>
+        <div class="empty-mark"><svg><use href="#i-library"/></svg></div>
+        <h2>Your shelf is empty</h2>
+        <p>Add EPUB files to start reading. Everything stays on this computer.</p>
+        <button class="btn primary" id="btnAdd2"><svg><use href="#i-plus"/></svg>Add books</button>
+        <span class="drop-hint">or drop <b>.epub</b> files anywhere in this window</span>
+      </div>
+    </section>
+
+    <!-- Highlights -->
+    <section class="view" id="view-highlights">
+      <header class="page-head">
+        <div class="head-text">
+          <h1>Highlights</h1>
+          <p id="hlSub">Everything you have marked</p>
+        </div>
+        <div class="head-actions">
+          <label class="field search">
+            <svg><use href="#i-search"/></svg>
+            <input id="hlSearch" type="search" placeholder="Search highlights and notes" autocomplete="off" spellcheck="false">
+          </label>
+          <select class="select" id="hlBook" aria-label="Filter by book"></select>
+        </div>
+      </header>
+      <div class="chips" id="hlColors"></div>
+      <div class="hl-list" id="hlList"></div>
+      <div class="empty" id="hlEmpty" hidden>
+        <div class="empty-mark"><svg><use href="#i-mark"/></svg></div>
+        <h2>No highlights yet</h2>
+        <p>Select text while reading, then pick a colour. Highlights are searchable here.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Reader -->
+<div class="reader" id="reader" hidden>
+  <header class="rbar">
+    <button class="ic-btn" id="rBack" title="Back to library (Esc)"><svg><use href="#i-back"/></svg></button>
+    <div class="rbar-title">
+      <strong id="rTitle"></strong>
+      <button class="r-chapter" id="rChapterBtn" title="Table of contents (T)"><span id="rChapter"></span><svg class="chev"><use href="#i-back"/></svg></button>
+    </div>
+    <div class="rbar-actions">
+      <button class="ic-btn" id="rTheme" title="Sepia theme (S)"><svg><use href="#i-sun"/></svg></button>
+      <button class="ic-btn" id="rFind" title="Search in book (Ctrl+F)"><svg><use href="#i-search"/></svg></button>
+      <button class="ic-btn" id="rBookmark" title="Bookmark this chapter (B)"><svg><use href="#i-bookmark"/></svg></button>
+      <button class="ic-btn" id="rSettings" title="Reading settings"><svg><use href="#i-sliders"/></svg></button>
+    </div>
+  </header>
+  <div class="rprog"><i id="rProgFill"></i></div>
+
+  <div class="rscroll" id="rScroll">
+    <div class="rwrap">
+      <article class="chapter" id="rBody"></article>
+      <footer class="rfoot" id="rFoot"></footer>
+    </div>
+  </div>
+
+  <button class="rnav prev" id="rPrev" title="Previous chapter (←)"><svg><use href="#i-back"/></svg></button>
+  <button class="rnav next" id="rNext" title="Next chapter (→)"><svg><use href="#i-back"/></svg></button>
+  <div class="rbottom"><span id="rPos"></span><span class="dot">·</span><span id="rTime"></span></div>
+
+  <aside class="drawer" id="dToc" hidden>
+    <div class="drawer-head">
+      <strong>Contents</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <label class="field search flat">
+      <svg><use href="#i-search"/></svg>
+      <input id="tocFilter" type="search" placeholder="Filter chapters" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="drawer-body" id="tocList"></div>
+  </aside>
+
+  <aside class="drawer" id="dFind" hidden>
+    <div class="drawer-head">
+      <strong>Search in book</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <label class="field search flat">
+      <svg><use href="#i-search"/></svg>
+      <input id="findInput" type="search" placeholder="Find in this book" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="drawer-body" id="findList"></div>
+  </aside>
+
+  <aside class="drawer" id="dSet" hidden>
+    <div class="drawer-head">
+      <strong>Reading settings</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="drawer-body settings">
+      <div class="set-label">Theme</div>
+      <div class="theme-grid" id="themeGrid"></div>
+      <div class="set-label">Typeface</div>
+      <div class="seg" id="fontSeg">
+        <button data-font="serif">Serif</button>
+        <button data-font="sans">Sans</button>
+      </div>
+      <label class="set-row"><span>Text size</span><input type="range" id="setSize" min="15" max="27" step="1"><output id="outSize"></output></label>
+      <label class="set-row"><span>Line height</span><input type="range" id="setLh" min="1.4" max="2.2" step="0.02"><output id="outLh"></output></label>
+      <label class="set-row"><span>Page width</span><input type="range" id="setWidth" min="520" max="900" step="10"><output id="outWidth"></output></label>
+      <label class="set-row"><span>Justified text</span><input type="checkbox" id="setJustify" class="switch"></label>
+      <button class="btn ghost wide" id="setReset">Reset to defaults</button>
+    </div>
+  </aside>
+
+  <div class="selbar" id="selBar" hidden>
+    <div class="swatches" id="selColors"></div>
+    <span class="sel-div"></span>
+    <button class="sel-act" id="selCopy" title="Copy text"><svg><use href="#i-mark"/></svg></button>
+  </div>
+
+  <div class="pop" id="hlPop" hidden>
+    <div class="swatches" id="popColors"></div>
+    <textarea id="popNote" rows="2" placeholder="Add a note…" spellcheck="true"></textarea>
+    <div class="pop-row">
+      <button class="link" data-act="copy">Copy quote</button>
+      <span class="grow"></span>
+      <button class="link danger" data-act="del">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="help" hidden>
+  <div class="modal-card">
+    <div class="drawer-head"><strong>Keyboard shortcuts</strong><button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button></div>
+    <div class="keys">
+      <div><kbd>←</kbd><kbd>→</kbd><span>Previous / next chapter</span></div>
+      <div><kbd>Esc</kbd><span>Close panel or reader</span></div>
+      <div><kbd>Ctrl</kbd><kbd>F</kbd><span>Search inside the book</span></div>
+      <div><kbd>T</kbd><span>Table of contents</span></div>
+      <div><kbd>B</kbd><span>Bookmark chapter</span></div>
+      <div><kbd>S</kbd><span>Sepia reading theme</span></div>
+      <div><kbd>+</kbd><kbd>−</kbd><span>Text size</span></div>
+      <div><kbd>Ctrl</kbd><kbd>B</kbd><span>Back up the library</span></div>
+      <div><kbd>?</kbd><span>This list</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lb-bar">
+    <span class="lb-name" id="lbName"></span>
+    <button class="btn lb-save" id="lbSave"><svg><use href="#i-download"/></svg>Save as…</button>
+    <button class="ic-btn lb-close" id="lbClose" title="Close (Esc)"><svg><use href="#i-close"/></svg></button>
+  </div>
+  <div class="lb-stage" id="lbStage"><img id="lbImg" alt=""></div>
+  <button class="lb-nav prev" id="lbPrev" title="Previous image"><svg><use href="#i-back"/></svg></button>
+  <button class="lb-nav next" id="lbNext" title="Next image"><svg><use href="#i-back"/></svg></button>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="dropzone" id="dropzone" hidden><div><svg><use href="#i-upload"/></svg><strong>Drop EPUB files to add them</strong></div></div>
+
+<script src="app.js"></script>
+</body>
+</html>
