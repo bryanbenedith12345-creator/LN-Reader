@@ -1,0 +1,36 @@
+/* Yolala's LN Reader - tts styles. */
+
+/* ---- read aloud ---- */
+::highlight(tts-unit) { background-color: color-mix(in srgb, var(--accent) 17%, transparent); color: inherit; }
+::highlight(tts-sentence) { background-color: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; }
+::highlight(tts-word) { background-color: color-mix(in srgb, var(--accent) 58%, transparent); color: inherit; }
+
+.tts-dock {
+  position: fixed; left: 50%; bottom: 16px; z-index: 18; display: flex; align-items: center; gap: 12px;
+  width: min(640px, calc(100vw - 40px)); padding: 10px 12px 10px 10px; border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line);
+  box-shadow: var(--shadow); backdrop-filter: blur(20px) saturate(1.2);
+  transform: translateX(-50%); animation: ttspin .2s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes ttspin { from { opacity: 0; transform: translate(-50%, 8px) scale(.99); } }
+.tts-prog { position: absolute; left: 0; top: 0; height: 2px; border-radius: 14px 0 0 0; background: var(--accent); transition: width .25s ease; }
+.tts-play {
+  width: 38px; height: 38px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: var(--accent-fg);
+  transition: transform .14s ease, background .15s;
+}
+.tts-play:hover { transform: scale(1.05); }
+.tts-play:active { transform: scale(.96); }
+.tts-play svg { width: 17px; height: 17px; fill: currentColor; stroke: none; }
+.tts-now { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.tts-label { font-size: 12.3px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fg); }
+.tts-meta { font-size: 10.6px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tts-acts { display: flex; align-items: center; gap: 1px; flex: none; }
+.tts-btn { width: 29px; height: 29px; border-radius: 7px; display: grid; place-items: center; color: var(--muted); transition: background .14s, color .14s; }
+.tts-btn:hover { background: var(--hover); color: var(--fg); }
+.tts-btn:disabled { opacity: .28; pointer-events: none; }
+.tts-btn svg { width: 15px; height: 15px; }
+.tts-btn svg.flip { transform: rotate(180deg); }
+
+.tts-select { width: 100%; }
+.set-note { margin: 7px 2px 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
