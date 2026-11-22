@@ -330,13 +330,16 @@ function setView(name) {
 
 /* --------------------------------------------------------- highlight list -- */
 function renderHighlightFilters() {
+  const bookId = $('#hlBook').value;
+  const pool = S.highlights.filter((h) => !bookId || h.book === bookId);
+  if (hlColorFilter && !pool.some((h) => h.color === hlColorFilter)) hlColorFilter = '';
   const chips = COLORS.map((c) => {
-    const n = S.highlights.filter((h) => h.color === c.id).length;
+    const n = pool.filter((h) => h.color === c.id).length;
     if (!n) return '';
     return `<button class="chip${hlColorFilter === c.id ? ' on' : ''}" data-color="${c.id}">
       <i style="background:${c.hex}"></i>${c.name}<span class="n">${n}</span></button>`;
   }).join('');
-  $('#hlColors').innerHTML = `<button class="chip${hlColorFilter ? '' : ' on'}" data-color="">All<span class="n">${S.highlights.length}</span></button>${chips}`;
+  $('#hlColors').innerHTML = `<button class="chip${hlColorFilter ? '' : ' on'}" data-color="">All<span class="n">${pool.length}</span></button>${chips}`;
 
   const select = $('#hlBook');
   const current = select.value;
@@ -446,12 +449,13 @@ async function openBook(id, chapter, opts = {}) {
   R.hl = detail.highlights || [];
   R.bm = detail.bookmarks || [];
   R.ready = false;
+  findColor = '';
   R.prog.scroll = R.prog.scroll || {};
   R.ch = clamp(chapter ?? R.prog.ch ?? 0, 0, R.meta.chapters.length - 1);
   $('#rTitle').textContent = R.meta.title;
   $('#reader').hidden = false;
   isOpen = true;
-  document.title = R.meta.title + ' — LN Reader';
+  document.title = R.meta.title + " — Yolala's LN Reader";
   buildToc();
   updateBookmarkBtn();
   await loadChapter(R.ch, opts);
@@ -593,7 +597,7 @@ function closeReader() {
   closeLightbox();
   hideSelBar();
   hideHighlightPop();
-  document.title = 'LN Reader';
+  document.title = "Yolala's LN Reader";
   updateCounts();
   renderLibrary();
   renderHighlights();
@@ -920,7 +924,7 @@ async function saveLightboxImage() {
   if (!item.path) { toast('This image cannot be saved'); return; }
   const dot = item.path.lastIndexOf('.');
   const ext = dot > 0 ? item.path.slice(dot) : '.jpg';
-  const title = R.meta ? R.meta.title : 'LN Reader';
+  const title = R.meta ? R.meta.title : "Yolala's LN Reader";
   const name = title + ' - ' + chapterTitle(R.ch) + ' - image ' + (LB.index + 1) + ext;
   try {
     const result = await postJSON('/api/save-image', { book: item.book, path: item.path, name });
@@ -944,11 +948,43 @@ async function saveLightboxImage() {
 
 /* -------------------------------------------------------------- find panel -- */
 let findTimer = null;
+let findColor = '';
+function renderFindHighlights() {
+  if (!R.id) return;
+  const items = S.highlights.filter((h) => h.book === R.id);
+  const colors = COLORS.filter((c) => items.some((h) => h.color === c.id));
+  const chips = $('#findColors');
+  $('#findSub').hidden = !items.length;
+  chips.hidden = !items.length;
+  if (items.length) {
+    chips.innerHTML = `<button class="chip${findColor ? '' : ' on'}" data-color="">All<span class="n">${items.length}</span></button>` +
+      colors.map((c) => `<button class="chip${findColor === c.id ? ' on' : ''}" data-color="${c.id}">
+        <i style="background:${c.hex}"></i>${c.name}<span class="n">${items.filter((h) => h.color === c.id).length}</span></button>`).join('');
+  }
+  const list = items.filter((h) => !findColor || h.color === findColor).sort((a, b) => a.ch - b.ch || a.start - b.start);
+  $('#findList').innerHTML = list.length ? list.map((h) => {
+    const color = (COLORS.find((c) => c.id === h.color) || COLORS[0]).hex;
+    const quote = h.quote.length > 160 ? h.quote.slice(0, 160) + '…' : h.quote;
+    return `<button class="find-hit" data-hid="${esc(h.id)}">
+      <span class="fh"><i class="fdot" style="background:${color}"></i><b>${esc(chapterTitle(h.ch))}</b><span>ch. ${h.ch + 1}</span></span>
+      <span class="fs">${esc(quote)}</span>
+      ${h.note ? `<span class="fnote">${esc(h.note)}</span>` : ''}
+    </button>`;
+  }).join('') : `<div class="find-note">${items.length ? 'No highlights in this colour.' : 'No highlights in this book yet. Select text while reading to add one.'}</div>`;
+}
 async function findInBook() {
   const input = $('#findInput');
   const query = input.value.trim();
   const list = $('#findList');
-  if (query.length < 2) { list.innerHTML = '<div class="find-note">Type at least two characters.</div>'; return; }
+  if (!query) { renderFindHighlights(); return; }
+  if (query.length < 2) {
+    $('#findSub').hidden = true;
+    $('#findColors').hidden = true;
+    list.innerHTML = '<div class="find-note">Type at least two characters.</div>';
+    return;
+  }
+  $('#findSub').hidden = true;
+  $('#findColors').hidden = true;
   list.innerHTML = '<div class="find-note">Searching…</div>';
   try {
     const data = await getJSON(`/api/book/${R.id}/search?q=${encodeURIComponent(query)}`);
@@ -971,18 +1007,34 @@ function scheduleFind() {
 }
 
 /* ----------------------------------------------------------------- panels -- */
+const drawerTimers = new WeakMap();
+function showDrawer(panel) {
+  clearTimeout(drawerTimers.get(panel));
+  panel.hidden = false;
+  void panel.offsetWidth;
+  panel.classList.add('open');
+}
+function hideDrawer(panel) {
+  if (panel.hidden) return;
+  panel.classList.remove('open');
+  clearTimeout(drawerTimers.get(panel));
+  drawerTimers.set(panel, setTimeout(() => { panel.hidden = true; }, 240));
+}
 function closePanels() {
-  $$('.drawer').forEach((d) => { d.hidden = true; });
+  $$('.drawer').forEach(hideDrawer);
   $('#help').hidden = true;
 }
 function togglePanel(id) {
   const panel = $('#' + id);
-  const wasOpen = !panel.hidden;
+  const wasOpen = !panel.hidden && panel.classList.contains('open');
   closePanels();
   if (wasOpen) return;
-  panel.hidden = false;
+  showDrawer(panel);
   if (id === 'dToc') { $('#tocFilter').value = ''; filterToc(''); }
-  if (id === 'dFind') { setTimeout(() => $('#findInput').focus(), 30); if ($('#findList').innerHTML === '' && $('#findInput').value) findInBook(); }
+  if (id === 'dFind') {
+    setTimeout(() => $('#findInput').focus(), 30);
+    if ($('#findInput').value.trim()) findInBook(); else renderFindHighlights();
+  }
 }
 
 /* ------------------------------------------------------------------ import -- */
@@ -1072,7 +1124,7 @@ function bindUI() {
   });
 
   $('#hlSearch').addEventListener('input', renderHighlights);
-  $('#hlBook').addEventListener('change', renderHighlights);
+  $('#hlBook').addEventListener('change', () => { renderHighlightFilters(); renderHighlights(); });
   $('#hlColors').addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
@@ -1092,6 +1144,15 @@ function bindUI() {
   });
 
   // reader chrome
+  const setSide = (hidden) => {
+    $('.app').classList.toggle('side-collapsed', hidden);
+    $('#sideOpen').hidden = !hidden;
+    localStorage.setItem('ln.side', hidden ? '1' : '0');
+  };
+  $('#sideHide').onclick = () => setSide(true);
+  $('#sideOpen').onclick = () => setSide(false);
+  if (localStorage.getItem('ln.side') === '1') setSide(true);
+
   $('#rBack').onclick = closeReader;
   $('#rPrev').onclick = () => goChapter(-1);
   $('#rNext').onclick = () => goChapter(1);
@@ -1120,19 +1181,36 @@ function bindUI() {
   });
   $('#tocFilter').addEventListener('input', (e) => filterToc(e.target.value));
 
-  $('#findInput').addEventListener('input', scheduleFind);
+  $('#findInput').addEventListener('input', (e) => {
+    if (e.target.value.trim()) scheduleFind(); else renderFindHighlights();
+  });
+  $('#findColors').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    findColor = chip.dataset.color;
+    renderFindHighlights();
+  });
   $('#findInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); findInBook(); }
   });
   $('#findList').addEventListener('click', (e) => {
     const hit = e.target.closest('.find-hit');
     if (!hit) return;
+    if (hit.dataset.hid) {
+      const h = highlightById(hit.dataset.hid);
+      if (!h) return;
+      closePanels();
+      if (h.ch === R.ch) flashHighlight(h.id);
+      else loadChapter(h.ch, { flash: h.id });
+      return;
+    }
     closePanels();
     loadChapter(Number(hit.dataset.ch), { text: $('#findInput').value.trim() });
   });
 
   $$('[data-close]').forEach((btn) => btn.addEventListener('click', () => {
-    btn.closest('.drawer, .modal').hidden = true;
+    const box = btn.closest('.drawer, .modal');
+    if (box.classList.contains('drawer')) hideDrawer(box); else box.hidden = true;
   }));
   $('#help').addEventListener('click', (e) => { if (e.target.id === 'help') $('#help').hidden = true; });
 
@@ -1167,6 +1245,7 @@ function bindUI() {
     const target = e.target instanceof Element ? e.target : null;
     if (!target || !target.closest('#selBar, #hlPop')) hideSelBar();
     if (!target || !target.closest('#hlPop')) hideHighlightPop();
+    if (target && !target.closest('.drawer, .modal, #rFind, #rChapterBtn, #rSettings') && $$('.drawer').some((d) => !d.hidden)) closePanels();
   });
   document.addEventListener('mouseup', (e) => {
     const target = e.target instanceof Element ? e.target : null;
@@ -1283,7 +1362,7 @@ function onKey(e) {
     if (!$('#hlPop').hidden) { hideHighlightPop(); return; }
     if (!$('#selBar').hidden) { hideSelBar(); return; }
     const openDrawer = $$('.drawer').find((d) => !d.hidden);
-    if (openDrawer) { openDrawer.hidden = true; return; }
+    if (openDrawer) { hideDrawer(openDrawer); return; }
     if (typing) { e.target.blur(); return; }
     if (isOpen) closeReader();
     return;

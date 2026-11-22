@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LN Reader</title>
+<title>Yolala's LN Reader</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a1a1e'/%3E%3Cpath d='M10 7h9a3 3 0 0 1 3 3v15l-6-3.6L10 25V7z' fill='%230a84ff'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <svg class="sprite" aria-hidden="true">
-  <symbol id="i-library" viewBox="0 0 24 24"><path d="M4 4.5h4.5v15H4zM10.5 4.5H15v15h-4.5zM17.2 5.2l3.5 1.1-4.1 14-3.4-1.1z"/></symbol>
+  <symbol id="i-side" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M9.5 5v14"/></symbol>
+  <symbol id="i-library" viewBox="0 0 24 24"><path d="M12 6.8C10.7 5.5 8.8 4.9 6.4 4.9c-1 0-1.8.1-2.4.4v13.2c.6-.2 1.4-.3 2.4-.3 2.4 0 4.3.6 5.6 1.9 1.3-1.3 3.2-1.9 5.6-1.9 1 0 1.8.1 2.4.3V5.3c-.6-.3-1.4-.4-2.4-.4-2.4 0-4.3.6-5.6 1.9z"/><path d="M12 6.8v13.3"/></symbol>
   <symbol id="i-mark" viewBox="0 0 24 24"><path d="M4 20h5l9.4-9.4a2.2 2.2 0 0 0 0-3.1l-2-2a2.2 2.2 0 0 0-3.1 0L4 15z"/><path d="M13.5 6.5l4 4"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.3"/><path d="M15.6 15.6 20 20"/></symbol>
@@ -31,7 +32,8 @@
   <aside class="sidebar">
     <div class="brand">
       <span class="brand-mark"><svg><use href="#i-bookmark"/></svg></span>
-      <div class="brand-text"><strong>LN Reader</strong><small>Light novel library</small></div>
+      <div class="brand-text"><strong>Yolala's LN Reader</strong><small>Light novel library</small></div>
+      <button class="side-hide" id="sideHide" title="Hide sidebar" aria-label="Hide sidebar"><svg><use href="#i-back"/></svg></button>
     </div>
 
     <nav class="nav" id="nav">
@@ -60,6 +62,7 @@
   </aside>
 
   <main class="main" id="main">
+    <button class="side-open" id="sideOpen" title="Show sidebar" aria-label="Show sidebar" hidden><svg><use href="#i-side"/></svg></button>
     <!-- Library -->
     <section class="view is-active" id="view-library">
       <header class="page-head">
@@ -170,6 +173,8 @@
       <svg><use href="#i-search"/></svg>
       <input id="findInput" type="search" placeholder="Find in this book" autocomplete="off" spellcheck="false">
     </label>
+    <div class="find-sub" id="findSub">Highlights in this book</div>
+    <div class="chips find-chips" id="findColors" hidden></div>
     <div class="drawer-body" id="findList"></div>
   </aside>
 

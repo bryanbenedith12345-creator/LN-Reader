@@ -780,7 +780,7 @@ def save_image_dialog(payload: bytes, suggested: str) -> str | None:
     )
     dialog = OPENFILENAMEW()
     dialog.lStructSize = ctypes.sizeof(OPENFILENAMEW)
-    dialog.hwndOwner = ctypes.windll.user32.FindWindowW(None, "LN Reader")
+    dialog.hwndOwner = ctypes.windll.user32.FindWindowW(None, "Yolala's LN Reader")
     dialog.lpstrFilter = ctypes.cast(filters, wintypes.LPCWSTR)
     dialog.lpstrFile = ctypes.cast(buffer, wintypes.LPWSTR)
     dialog.nMaxFile = 2048
@@ -1061,7 +1061,7 @@ def native_window(url: str) -> bool:
         return False
     try:
         webview.create_window(
-            "LN Reader", url, width=1440, height=920, min_size=(980, 620),
+            "Yolala's LN Reader", url, width=1440, height=920, min_size=(980, 620),
             background_color="#111113",
         )
         webview.start(debug=False, private_mode=False, storage_path=str(DATA / "webview"))
@@ -1145,7 +1145,7 @@ def main() -> None:
             pass
         return
 
-    print(f"LN Reader running at {url}", flush=True)
+    print(f"Yolala's LN Reader running at {url}", flush=True)
     if not open_client(url):
         import webbrowser
         webbrowser.open(url)
@@ -1170,7 +1170,7 @@ def fatal(message: str) -> None:
     try:
         if sys.platform == "win32":
             import ctypes
-            ctypes.windll.user32.MessageBoxW(None, message[-1500:], "LN Reader - problem", 0x10)
+            ctypes.windll.user32.MessageBoxW(None, message[-1500:], "Yolala's LN Reader - problem", 0x10)
     except Exception:
         pass
 
@@ -1181,4 +1181,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     except Exception:
-        fatal("LN Reader could not start.\n\n" + traceback.format_exc())
+        fatal("Yolala's LN Reader could not start.\n\n" + traceback.format_exc())

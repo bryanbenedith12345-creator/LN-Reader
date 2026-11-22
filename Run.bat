@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title LN Reader
+title Yolala's LN Reader
 
 set "PY="
 for %%P in (py python) do (
