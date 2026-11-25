@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Yolala's LN Reader
+title Simple LN Reader
 
 set "PY="
 for %%P in (py python) do (
@@ -22,7 +22,7 @@ if /i "%PY%"=="py" set "PY=py -3"
 %PY% -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>nul
 if errorlevel 1 (
   echo.
-  echo   LN Reader needs Python 3.10 or newer.
+  echo   Simple LN Reader needs Python 3.10 or newer.
   echo.
   pause
   exit /b 1

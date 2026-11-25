@@ -25,6 +25,33 @@ BROWSERS = [
 ]
 
 
+TITLE = "Simple LN Reader"
+
+
+def focus_existing() -> bool:
+    """Bring the window of an already running copy to the front.
+
+    A second launch must not build a second window: two windows share one
+    WebView2 profile folder and the newer one comes up black.
+    """
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        user32.FindWindowW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
+        user32.FindWindowW.restype = ctypes.c_void_p
+        hwnd = user32.FindWindowW(None, TITLE)
+        if not hwnd:
+            return False
+        user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+        user32.SetForegroundWindow(hwnd)
+        return True
+    except Exception:
+        return False
+
+
 def _colorref(value: str) -> int | None:
     """#RRGGBB -> Win32 COLORREF (0x00BBGGRR)."""
     text = str(value or "").strip().lstrip("#")
@@ -51,7 +78,7 @@ def theme_titlebar(hwnd: int, background: str, text: str, dark: bool) -> bool:
         if not hwnd:
             user32.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
             user32.FindWindowW.restype = wintypes.HWND
-            hwnd = user32.FindWindowW(None, "Yolala's LN Reader")
+            hwnd = user32.FindWindowW(None, TITLE)
         if not hwnd:
             return False
         dwm = ctypes.windll.dwmapi
@@ -94,7 +121,7 @@ def native_window(url: str) -> bool:
     try:
         api = TitlebarApi()
         window = webview.create_window(
-            "Yolala's LN Reader", url, width=1440, height=920, min_size=(980, 620),
+            TITLE, url, width=1440, height=920, min_size=(980, 620),
             maximized=True, background_color="#111113", js_api=api,
         )
 
@@ -161,7 +188,7 @@ def main() -> None:
         url = f"http://127.0.0.1:{existing}/"
         if "--no-window" in sys.argv:
             print(url, flush=True)
-        elif not open_client(url):
+        elif not focus_existing() and not browser_window(url):
             import webbrowser
             webbrowser.open(url)
         return
@@ -186,7 +213,7 @@ def main() -> None:
             pass
         return
 
-    print(f"Yolala's LN Reader running at {url}", flush=True)
+    print(f"Simple LN Reader running at {url}", flush=True)
     if not open_client(url):
         import webbrowser
         webbrowser.open(url)
@@ -211,6 +238,6 @@ def fatal(message: str) -> None:
     try:
         if sys.platform == "win32":
             import ctypes
-            ctypes.windll.user32.MessageBoxW(None, message[-1500:], "Yolala's LN Reader - problem", 0x10)
+            ctypes.windll.user32.MessageBoxW(None, message[-1500:], "Simple LN Reader - problem", 0x10)
     except Exception:
         pass

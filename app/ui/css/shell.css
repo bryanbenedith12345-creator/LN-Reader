@@ -10,11 +10,10 @@
 }
 .brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px 6px; }
 .brand-mark {
-  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 92%, #fff), var(--accent));
-  color: var(--accent-fg); box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent) 60%, transparent);
+  width: 32px; height: 32px; flex: none; border-radius: 9px; object-fit: cover;
+  background: var(--raise);
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent) 55%, transparent);
 }
-.brand-mark svg { width: 17px; height: 17px; stroke-width: 1.9; }
 .brand-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .brand-text strong { font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; }
 .brand-text small { font-size: 11px; color: var(--muted); }

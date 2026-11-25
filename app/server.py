@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Yolala's LN Reader - start the local server and open the reading window.
+"""Simple LN Reader - start the local server and open the reading window.
 
 The implementation lives in the ``lnreader`` package next to this file:
 config (paths/state), cleaner/epub (EPUB parsing), queries, actions,
@@ -18,4 +18,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     except Exception:
-        fatal("Yolala's LN Reader could not start.\n\n" + traceback.format_exc())
+        fatal("Simple LN Reader could not start.\n\n" + traceback.format_exc())

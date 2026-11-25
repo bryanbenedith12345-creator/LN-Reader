@@ -27,7 +27,7 @@ from .shelves import add_books, create, delete as delete_shelf, rename, remove_b
 from .queries import book_detail, library, search_book, search_library
 
 STATIC_FILES = {"": "index.html", "/": "index.html", "/index.html": "index.html"}
-STATIC_FOLDERS = {"css": ".css", "js": ".js", "partials": ".html"}
+STATIC_FOLDERS = {"css": ".css", "js": ".js", "partials": ".html", "img": ".png"}
 for _folder, _ext in STATIC_FOLDERS.items():
     for _file in (UI / _folder).glob(f"*{_ext}"):
         STATIC_FILES[f"/{_folder}/{_file.name}"] = f"{_folder}/{_file.name}"
@@ -43,7 +43,7 @@ class App(BaseHTTPRequestHandler):
     last_ping = 0.0
     STATIC = STATIC_FILES
     TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-             ".js": "text/javascript; charset=utf-8"}
+             ".js": "text/javascript; charset=utf-8", ".png": "image/png"}
 
     def log_message(self, *args) -> None:
         pass

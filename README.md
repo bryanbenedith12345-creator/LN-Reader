@@ -1,4 +1,4 @@
-# Yolala's LN Reader
+# Simple LN Reader
 
 A local-only EPUB reader for light novels. A small Python server runs on
 `127.0.0.1`, a native window (or your browser) shows the reading app, and
@@ -85,7 +85,13 @@ app/
     partials/            the reader window, drawers and overlays
     js/                  30 small modules, one job each
     css/                 one file per area of the interface
+    img/                 the logo, used as the app mark and page icon
 tests/                   pytest suite over synthetic EPUBs
+build.bat                builds the stand-alone .exe
+build/
+  lnreader.spec          PyInstaller recipe (paths resolved from this folder)
+  app.ico                the app icon, 16 to 256 px, cut from the logo
+  version.txt            the file properties Explorer shows for the exe
 ```
 
 Motion is kept in one place: `css/base.css` holds the `--dur-*` timings and the
@@ -105,6 +111,19 @@ The tests build small EPUBs on the fly, so they never touch your library. Set
 `LN_READER_DATA` to point the app at a different data folder, and
 `LN_NO_DIALOG=1` to make Save-As dialogs write into that folder instead of
 showing a window (used for automated runs).
+
+### Building the exe
+
+Double-click **build.bat**. On its first run it installs PyInstaller, then it
+builds with the recipe in `build/` and leaves the app in
+`dist\Simple LN Reader\`: `Simple LN Reader.exe` (~5 MB) beside an `_internal`
+folder, 25 MB together, no console window and no UPX.
+
+That folder is the whole app — copy it anywhere and run the exe. Books,
+downloads and settings are created in `data\` next to it on first start, and a
+second double-click brings the running window to the front instead of opening
+another copy. Python 3.10+ is needed to *build*; the exe itself runs without
+it, and only the optional Piper voice packs look for a Python of their own.
 
 ## Safety
 

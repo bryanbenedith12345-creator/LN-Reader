@@ -22,7 +22,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from .config import DATA
+from .config import BASE, DATA, FROZEN, real_python
 
 ROOT = DATA / "tts"
 VOICES = ROOT / "voices"
@@ -32,7 +32,7 @@ ENGINE_MARK = RUNTIME / "build.txt"
 SPEECH = ROOT / "speech"
 CATALOG_FILE = ROOT / "catalog.json"
 ENGINE_LOG = ROOT / "piper.log"
-WORKER = Path(__file__).with_name("tts_worker.py")
+WORKER = (BASE / "tts_worker.py") if FROZEN else Path(__file__).with_name("tts_worker.py")
 
 CATALOG_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json"
 MODEL_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/"
@@ -310,9 +310,13 @@ def _run_engine_install(job: dict) -> None:
                 stale.unlink(missing_ok=True)
         except OSError:
             pass
-    command = [sys.executable, "-m", "pip", "install", "--no-input",
-               "--disable-pip-version-check", "--no-warn-script-location",
-               "--target", str(ENGINE_SITE), ENGINE_PACKAGE]
+    python = real_python()
+    if not python:
+        raise TTSError("Adding a voice pack needs Python 3 installed on this computer; "
+                       "the system voices above work without it")
+    command = python + ["-m", "pip", "install", "--no-input",
+                        "--disable-pip-version-check", "--no-warn-script-location",
+                        "--target", str(ENGINE_SITE), ENGINE_PACKAGE]
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
     env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1")
     try:
@@ -518,7 +522,10 @@ class Engine:
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
         env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1",
                    PYTHONDONTWRITEBYTECODE="1")
-        cmd = [sys.executable, str(WORKER), str(ENGINE_SITE)]
+        python = real_python()
+        if not python:
+            raise TTSError("Voice packs need Python 3 installed on this computer")
+        cmd = python + [str(WORKER), str(ENGINE_SITE)]
         try:
             proc = subprocess.Popen(cmd, cwd=str(ROOT), stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE, stderr=self.log,

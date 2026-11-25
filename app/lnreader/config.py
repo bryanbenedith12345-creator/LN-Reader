@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 import threading
 import time
@@ -10,9 +11,18 @@ from collections import OrderedDict
 from pathlib import Path
 from urllib.parse import quote
 
-BASE = Path(__file__).resolve().parent.parent
-UI = BASE / "ui"
-ROOT = Path(os.environ.get("LN_READER_HOME", BASE.parent))
+# Two ways to run: from source, or from the built exe. Frozen, the code sits in
+# PyInstaller's _internal folder while the library, downloads and browser
+# profile stay in a data folder next to Simple LN Reader.exe.
+FROZEN = bool(getattr(sys, "frozen", False))
+if FROZEN:
+    BASE = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    UI = BASE / "ui"
+    ROOT = Path(os.environ.get("LN_READER_HOME", Path(sys.executable).resolve().parent))
+else:
+    BASE = Path(__file__).resolve().parent.parent
+    UI = BASE / "ui"
+    ROOT = Path(os.environ.get("LN_READER_HOME", BASE.parent))
 DATA = Path(os.environ.get("LN_READER_DATA", ROOT / "data"))
 BOOKS = DATA / "books"
 CACHE = DATA / "cache"
@@ -46,6 +56,42 @@ def _streams() -> None:
 
 
 _streams()
+
+
+def real_python() -> list[str] | None:
+    """Command prefix for a real CPython, for what the frozen exe cannot do.
+
+    The Piper engine is installed with pip and speaks from its own process, so
+    it needs an interpreter; a built exe has none of its own. Source runs use
+    themselves, the exe looks for the Python 3 already on the machine and
+    returns None when there is none.
+    """
+    if not FROZEN:
+        return [sys.executable]
+    for name in ("python", "python3"):
+        found = shutil.which(name)
+        if found:
+            try:
+                if Path(found).stat().st_size > 4096:  # skip the Store stub
+                    return [found]
+            except OSError:
+                pass
+    roots = [Path(os.environ[k]) / "Programs" / "Python"
+             for k in ("LOCALAPPDATA",) if os.environ.get(k)]
+    if os.environ.get("PROGRAMFILES"):
+        roots.append(Path(os.environ["PROGRAMFILES"]) / "Python")
+    roots.append(Path("C:/"))
+    for root in roots:
+        try:
+            for exe in sorted(root.glob("Python3*/python.exe"), reverse=True):
+                if exe.is_file():
+                    return [str(exe)]
+        except OSError:
+            continue
+    launcher = shutil.which("py")
+    if launcher:
+        return [launcher, "-3"]
+    return None
 
 
 DEFAULT_SETTINGS = {
