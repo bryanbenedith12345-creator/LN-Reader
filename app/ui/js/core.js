@@ -1,29 +1,8 @@
-/* Yolala's LN Reader - constants, shared state, helpers, API and toasts.
+/* Yolala's LN Reader - shared state, helpers, API access and toasts.
    Classic script: loaded in order from index.html; shared globals. */
 'use strict';
 
 /* ------------------------------------------------------------ constants -- */
-const THEMES = [
-  { id: 'cupertino', name: 'Cupertino', bg: '#131315', panel: '#1b1b1f', accent: '#0a84ff' },
-  { id: 'graphite', name: 'Graphite', bg: '#1a1a1c', panel: '#232326', accent: '#ff9f0a' },
-  { id: 'nord', name: 'Nord', bg: '#2e3440', panel: '#3b4252', accent: '#88c0d0' },
-  { id: 'dracula', name: 'Dracula', bg: '#282a36', panel: '#343746', accent: '#bd93f9' },
-  { id: 'gruvbox', name: 'Gruvbox', bg: '#282828', panel: '#32302f', accent: '#fabd2f' },
-  { id: 'gruvbox-light', name: 'Gruvbox Light', bg: '#fbf1c7', panel: '#f2e5bc', accent: '#b57614' },
-  { id: 'solarized-dark', name: 'Solarized', bg: '#002b36', panel: '#073642', accent: '#268bd2' },
-  { id: 'solarized-light', name: 'Solarized Light', bg: '#fdf6e3', panel: '#eee8d5', accent: '#268bd2' },
-  { id: 'one-dark', name: 'One Dark', bg: '#282c34', panel: '#2f343d', accent: '#61afef' },
-  { id: 'catppuccin-mocha', name: 'Catppuccin', bg: '#1e1e2e', panel: '#27273a', accent: '#89b4fa' },
-  { id: 'catppuccin-latte', name: 'Latte', bg: '#eff1f5', panel: '#e6e9ef', accent: '#1e66f5' },
-  { id: 'tokyo-night', name: 'Tokyo Night', bg: '#1a1b26', panel: '#24283b', accent: '#7aa2f7' },
-  { id: 'rose-pine-moon', name: 'Rosé Pine', bg: '#232136', panel: '#2a273f', accent: '#c4a7e7' },
-  { id: 'rose-pine-dawn', name: 'Rosé Dawn', bg: '#faf4ed', panel: '#fffaf3', accent: '#907aa9' },
-  { id: 'everforest', name: 'Everforest', bg: '#2b3339', panel: '#333c43', accent: '#a7c080' },
-  { id: 'github-dark', name: 'GitHub', bg: '#0d1117', panel: '#161b22', accent: '#58a6ff' },
-  { id: 'ayu-mirage', name: 'Ayu Mirage', bg: '#1f2430', panel: '#242936', accent: '#ffcc66' },
-  { id: 'paper', name: 'Paper', bg: '#f6f1e7', panel: '#fffaf0', accent: '#a5642f' },
-  { id: 'sepia', name: 'Sepia', bg: '#f0e6d2', panel: '#faf4e5', accent: '#8f5730' },
-];
 const COLORS = [
   { id: 'yellow', name: 'Yellow', hex: '#f2c94c' },
   { id: 'green', name: 'Green', hex: '#6fcf97' },
@@ -33,17 +12,13 @@ const COLORS = [
   { id: 'orange', name: 'Orange', hex: '#f2994a' },
 ];
 const DEFAULTS = { theme: 'cupertino', font: 'serif', size: 19, lh: 1.78, width: 720, justify: true };
-const SEPIA = 'sepia';
 const WPM = 230;
 
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-
-const S = { books: [], highlights: [], bookmarks: [], settings: { ...DEFAULTS }, stats: {} };
+/* ---------------------------------------------------------------- state -- */
+const S = { books: [], highlights: [], favorites: [], collections: [], collectionBooks: {}, settings: { ...DEFAULTS }, stats: {} };
+const R = { id: null, meta: null, ch: 0, prog: {}, hl: [], ready: false, words: 0 };
 const metaCache = new Map();
 const chapterCache = new Map();
-const R = { id: null, meta: null, ch: 0, prog: {}, hl: [], bm: [], ready: false, words: 0 };
 let isOpen = false;
 let view = 'library';
 let pendingSel = null;
@@ -53,6 +28,10 @@ let hlRenderToken = 0;
 let toastTimer = null;
 
 /* -------------------------------------------------------------- helpers -- */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -89,10 +68,22 @@ function markQuery(text, query) {
   const q = esc(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return safe.replace(new RegExp(q, 'gi'), (m) => `<mark>${m}</mark>`);
 }
+function colorHex(id) {
+  return (COLORS.find((c) => c.id === id) || COLORS[0]).hex;
+}
 
 /* ------------------------------------------------------------------ api -- */
-async function api(path, opts = {}) {
-  const res = await fetch(path, opts);
+const TOKEN = (document.querySelector('meta[name="ln-token"]') || {}).content || '';
+
+async function api(path, opts = {}, retry = true) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: { ...(opts.headers || {}), 'X-LN-Token': TOKEN },
+  });
+  if (res.status === 401 && retry) {
+    location.reload();
+    throw new Error('refreshing the session');
+  }
   if (!res.ok) {
     let msg = res.statusText;
     try { msg = (await res.json()).error || msg; } catch (_) { /* ignore */ }
@@ -107,7 +98,7 @@ const postJSON = (path, body) => api(path, {
 });
 
 /* ---------------------------------------------------------------- toast -- */
-function hideToast() { $('#toast').hidden = true; }
+function hideToast() { hideEl($('#toast'), MOTION.fast); }
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -124,7 +115,7 @@ async function copyText(text) {
 }
 function toast(message, opts = {}) {
   const node = $('#toast');
-  node.hidden = false;
+  showEl(node);
   node.innerHTML = '';
   const text = document.createElement('span');
   text.textContent = message;

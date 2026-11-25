@@ -3,8 +3,8 @@
 /* ---- reader ---- */
 .reader { position: fixed; inset: 0; z-index: 40; background: var(--rd-bg); color: var(--rd-fg); display: flex; flex-direction: column; }
 .reader[hidden], .drawer[hidden], .modal[hidden], .pop[hidden], .selbar[hidden], .toast[hidden], .dropzone[hidden] { display: none !important; }
-.reader { animation: fade .18s ease both; }
-@keyframes fade { from { opacity: 0; } }
+.reader { animation: fade-in var(--dur-3) var(--ease) both; }
+.reader.is-closing { animation: fade-out var(--dur-2) var(--ease) both; }
 
 .rbar {
   position: relative; z-index: 12; display: flex; align-items: center; gap: 8px;
@@ -16,7 +16,7 @@
 .ic-btn {
   width: 32px; height: 32px; border-radius: 7px; display: grid; place-items: center;
   color: color-mix(in srgb, var(--rd-fg) 72%, transparent); flex: none;
-  transition: background .14s, color .14s;
+  transition: background var(--dur-2) var(--ease), color var(--dur-2) var(--ease), transform var(--dur-1) var(--ease);
 }
 .ic-btn:hover { background: color-mix(in srgb, var(--rd-fg) 9%, transparent); color: var(--rd-fg); }
 .ic-btn.is-on { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
@@ -29,10 +29,11 @@
 .r-chapter:hover { color: var(--accent); }
 .r-chapter .chev { width: 11px; height: 11px; transform: rotate(-90deg); }
 .rbar-actions { display: flex; gap: 2px; flex: none; }
-#rBookmark.on svg { fill: color-mix(in srgb, var(--accent) 85%, transparent); stroke: var(--accent); }
+#rFav.on { color: #ff6b81; }
+#rFav.on svg { fill: color-mix(in srgb, currentColor 88%, transparent); }
 
 .rprog { height: 2px; background: color-mix(in srgb, var(--rd-fg) 8%, transparent); flex: none; }
-.rprog i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease; }
+.rprog i { display: block; height: 100%; width: 0; background: var(--accent); transition: width var(--dur-4) var(--ease); }
 
 .rscroll { flex: 1; overflow-y: auto; overflow-x: hidden; scroll-behavior: auto; position: relative; }
 .rwrap { padding: 34px 24px 120px; }
@@ -69,9 +70,8 @@
 .chapter mark.hl[data-color="pink"] { --hl: #f78fb3; }
 .chapter mark.hl[data-color="purple"] { --hl: #b48cf2; }
 .chapter mark.hl[data-color="orange"] { --hl: #f2994a; }
-.chapter.enter { animation: chapin .2s ease both; }
-@keyframes chapin { from { opacity: 0; } }
-.chapter mark.hl { background: color-mix(in srgb, var(--hl) 30%, transparent); color: inherit; border-radius: 2px; cursor: pointer; box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--hl) 58%, transparent); }
+.chapter.enter { animation: rise-in var(--dur-3) var(--ease) both; }
+.chapter mark.hl { background: color-mix(in srgb, var(--hl) 30%, transparent); color: inherit; border-radius: 2px; cursor: pointer; box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--hl) 58%, transparent); transition: background var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease); }
 .chapter mark.hl:hover { background: color-mix(in srgb, var(--hl) 44%, transparent); }
 .chapter mark.flash { animation: flash 1.5s ease; }
 @keyframes flash {
@@ -81,7 +81,7 @@
 .chapter mark.hit { background: color-mix(in srgb, var(--accent) 34%, transparent); color: inherit; border-radius: 2px; }
 
 .rfoot { max-width: var(--rd-width); margin: 46px auto 0; padding-top: 20px; border-top: 1px solid color-mix(in srgb, var(--rd-fg) 10%, transparent); display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: color-mix(in srgb, var(--rd-fg) 52%, transparent); }
-.rfoot button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 7px; color: var(--accent); font-size: 12.2px; font-weight: 550; }
+.rfoot button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 7px; color: var(--accent); font-size: 12.2px; font-weight: 550; transition: background var(--dur-2) var(--ease), transform var(--dur-1) var(--ease); }
 .rfoot button:hover { background: color-mix(in srgb, var(--rd-fg) 8%, transparent); }
 .rfoot button:disabled { opacity: .35; pointer-events: none; }
 .rfoot button svg { width: 14px; height: 14px; }
@@ -92,19 +92,20 @@
   position: fixed; top: 50%; z-index: 11; width: 38px; height: 60px; margin-top: -30px;
   display: grid; place-items: center; border-radius: 10px; color: color-mix(in srgb, var(--rd-fg) 48%, transparent);
   background: color-mix(in srgb, var(--rd-bg) 70%, transparent); backdrop-filter: blur(10px);
-  opacity: 0; transition: opacity .18s, color .15s, background .15s;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease), color var(--dur-2) var(--ease), background var(--dur-2) var(--ease), transform var(--dur-2) var(--ease-soft);
 }
 .rnav:hover { color: var(--rd-fg); background: color-mix(in srgb, var(--rd-fg) 10%, transparent); }
 .rnav:disabled { opacity: 0 !important; pointer-events: none; }
 .rnav svg { width: 20px; height: 20px; }
-.rnav.prev { left: 10px; }
-.rnav.next { right: 10px; }
+.rnav.prev { left: 10px; transform: translateX(-6px); }
+.rnav.next { right: 10px; transform: translateX(6px); }
 .rnav.next svg { transform: rotate(180deg); }
-.reader:hover .rnav { opacity: .9; }
+.reader:hover .rnav, .rnav:focus-visible { opacity: .9; transform: none; }
 
 .rbottom {
   position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 11;
-  transition: opacity .18s ease, transform .18s ease;
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
   display: flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 20px;
   font-size: 11.3px; color: color-mix(in srgb, var(--rd-fg) 66%, transparent);
   background: color-mix(in srgb, var(--rd-bg) 76%, transparent); backdrop-filter: blur(14px);

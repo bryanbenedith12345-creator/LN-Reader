@@ -1,4 +1,4 @@
-"""Native Save-As dialog for chapter images."""
+"""Native Save-As dialogs for images, exports and other files."""
 from __future__ import annotations
 
 import os
@@ -8,19 +8,40 @@ from pathlib import Path
 
 from .config import DATA
 
-def save_image_dialog(payload: bytes, suggested: str) -> str | None:
-    """Ask for a destination and write the image there. Returns the path."""
-    ext = posixpath.splitext(suggested)[1].lower() or ".jpg"
-    folder = DATA / "images"
+IMAGE_FILTERS = (
+    "Image files\0*.jpg;*.jpeg;*.png;*.gif;*.webp;*.bmp;*.avif\0All files\0*.*\0\0"
+)
+NOTE_FILTERS = {
+    ".md": "Markdown\0*.md\0All files\0*.*\0\0",
+    ".csv": "CSV\0*.csv\0All files\0*.*\0\0",
+    ".epub": "EPUB\0*.epub\0All files\0*.*\0\0",
+}
+
+
+def _free_name(folder: Path, suggested: str) -> Path:
+    ext = posixpath.splitext(suggested)[1].lower()
+    target = folder / suggested
+    number = 1
+    while target.exists():
+        target = folder / f"{Path(suggested).stem} ({number}){ext}"
+        number += 1
+    return target
+
+
+def _fallback(payload: bytes, suggested: str, folder_name: str) -> str:
+    folder = DATA / folder_name
     folder.mkdir(parents=True, exist_ok=True)
+    target = _free_name(folder, suggested)
+    target.write_bytes(payload)
+    return str(target)
+
+
+def save_file_dialog(payload: bytes, suggested: str, title: str = "Save file",
+                     filters: str | None = None, folder: str = "files") -> str | None:
+    """Ask for a destination and write the bytes there. Returns the path."""
+    ext = posixpath.splitext(suggested)[1].lower() or ".txt"
     if sys.platform != "win32" or os.environ.get("LN_NO_DIALOG"):
-        target = folder / suggested
-        number = 1
-        while target.exists():
-            target = folder / f"{Path(suggested).stem} ({number}){ext}"
-            number += 1
-        target.write_bytes(payload)
-        return str(target)
+        return _fallback(payload, suggested, folder)
 
     import ctypes
     from ctypes import wintypes
@@ -53,19 +74,17 @@ def save_image_dialog(payload: bytes, suggested: str) -> str | None:
         ]
 
     buffer = ctypes.create_unicode_buffer(suggested, 2048)
-    filters = ctypes.create_unicode_buffer(
-        "Image files\0*.jpg;*.jpeg;*.png;*.gif;*.webp;*.bmp;*.avif\0All files\0*.*\0\0"
-    )
+    filters_buf = ctypes.create_unicode_buffer(filters or "All files\0*.*\0\0")
     dialog = OPENFILENAMEW()
     dialog.lStructSize = ctypes.sizeof(OPENFILENAMEW)
     dialog.hwndOwner = ctypes.windll.user32.FindWindowW(None, "Yolala's LN Reader")
-    dialog.lpstrFilter = ctypes.cast(filters, wintypes.LPCWSTR)
+    dialog.lpstrFilter = ctypes.cast(filters_buf, wintypes.LPCWSTR)
     dialog.lpstrFile = ctypes.cast(buffer, wintypes.LPWSTR)
     dialog.nMaxFile = 2048
-    dialog.lpstrTitle = "Save image"
-    pictures = Path.home() / "Pictures"
-    if pictures.is_dir():
-        dialog.lpstrInitialDir = str(pictures)
+    dialog.lpstrTitle = title
+    documents = Path.home() / "Documents"
+    if documents.is_dir():
+        dialog.lpstrInitialDir = str(documents)
     dialog.lpstrDefExt = ext.lstrip(".")
     dialog.Flags = 0x00080000 | 0x00000002 | 0x00000008 | 0x00000800
     comdlg = ctypes.windll.comdlg32
@@ -79,3 +98,7 @@ def save_image_dialog(payload: bytes, suggested: str) -> str | None:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(payload)
     return str(target)
+
+
+def save_image_dialog(payload: bytes, suggested: str) -> str | None:
+    return save_file_dialog(payload, suggested, "Save image", IMAGE_FILTERS, "images")

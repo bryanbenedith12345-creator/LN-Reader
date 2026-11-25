@@ -18,6 +18,15 @@
   --raise: color-mix(in srgb, var(--fg) 4%, transparent);
   --shadow: 0 24px 50px -24px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .18);
   color-scheme: dark;
+
+  /* motion: one rhythm for the whole app — quick hovers, eased panels, a soft settle on arrival */
+  --ease: cubic-bezier(.22, .72, .24, 1);
+  --ease-soft: cubic-bezier(.32, .72, 0, 1);
+  --ease-settle: cubic-bezier(.34, 1.26, .54, 1);
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 260ms;
+  --dur-4: 380ms;
 }
 
 /* ---- themes ---- */
@@ -51,6 +60,10 @@ body {
 }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { background: none; border: 0; cursor: pointer; }
+/* Icon-only controls: drop the browser's default padding so the glyph sits exactly
+   in the middle of its box (the UA 1px/6px padding pushes it right by 1-2px). */
+.ic-btn, .card-tool, .card-del, .card-fav, .side-add, .side-hide, .side-open, .sel-act,
+.tts-btn, .tts-play, .pack-del, .rnav, .lb-nav, .lb-close, .shelf-tools button, .hl-acts button { padding: 0; }
 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 ::selection { background: color-mix(in srgb, var(--accent) 34%, transparent); }
@@ -61,3 +74,25 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 ::-webkit-scrollbar-track { background: transparent; }
 
 :focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 75%, transparent); outline-offset: 2px; }
+
+/* ---- motion: the shared entrances and exits ---- */
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-6px) scale(.985); } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(4px) scale(.975); } }
+@keyframes rise-out { to { opacity: 0; transform: translateY(6px); } }
+@keyframes pop-out { to { opacity: 0; transform: translateY(3px) scale(.985); } }
+
+/* Every control gives a little on press; nothing stays rigid under the cursor. */
+.btn:active, .nav-btn:active, .side-btn:active, .ic-btn:active, .chip:active,
+.shelf-chip:active, .sel-act:active, .tts-btn:active, .card-tool:active, .card-del:active,
+.side-add:active, .shelf-tools button:active, .t-action:active, .menu button:active { transform: scale(.96); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}

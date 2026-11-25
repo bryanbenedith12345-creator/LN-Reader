@@ -1,16 +1,16 @@
 /* Yolala's LN Reader - sidebar styles. */
 
 /* ---- collapsible sidebar ---- */
-.app { transition: grid-template-columns .26s cubic-bezier(.2,.8,.2,1); }
+.app { transition: grid-template-columns var(--dur-3) var(--ease-soft); }
 .app.side-collapsed { grid-template-columns: 0 minmax(0, 1fr); }
 .app.side-collapsed .sidebar { transform: translateX(-24px); opacity: 0; pointer-events: none; }
 .app.side-collapsed .view { padding-left: 58px; }
-.view { transition: padding-left .26s cubic-bezier(.2,.8,.2,1); }
+.view { transition: padding-left var(--dur-3) var(--ease-soft); }
 .side-open {
   position: fixed; left: 14px; top: 17px; z-index: 16; width: 30px; height: 30px;
   display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line);
   background: var(--panel); color: var(--muted); box-shadow: var(--shadow);
-  transition: color .15s, background .15s, transform .15s;
+  transition: color var(--dur-2) var(--ease), background var(--dur-2) var(--ease), transform var(--dur-1) var(--ease);
 }
 .side-open:hover { color: var(--fg); background: var(--raise); }
 .side-open svg { width: 16px; height: 16px; }

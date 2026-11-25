@@ -1,0 +1,6 @@
+# Runtime dependency: the native reading window (WebView2 on Windows).
+# Everything else uses the Python standard library.
+pywebview>=4.4
+
+# Development
+pytest>=8.0

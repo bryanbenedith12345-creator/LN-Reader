@@ -1,0 +1,121 @@
+  <aside class="drawer global" id="dSearch" hidden>
+    <div class="drawer-head">
+      <strong>Search in books</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <label class="field search flat">
+      <svg><use href="#i-search"/></svg>
+      <input id="libSearchAll" type="search" placeholder="Search every book" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="find-sub" id="allSub">Search inside all books</div>
+    <div class="drawer-body" id="allHits"></div>
+  </aside>
+
+<!-- Book details -->
+<div class="modal" id="bookInfo" hidden>
+  <div class="modal-card wide">
+    <div class="drawer-head">
+      <strong id="infoTitle">Book details</strong>
+      <button class="ic-btn small" id="infoClose" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="info-body">
+      <p class="info-sub" id="infoSub"></p>
+      <label class="set-row field-row"><span>Title</span><input type="text" id="infoName" maxlength="200"></label>
+      <label class="set-row field-row"><span>Author</span><input type="text" id="infoAuthor" maxlength="200"></label>
+      <label class="set-row field-row"><span>Series</span><input type="text" id="infoSeries" maxlength="200" placeholder="optional"></label>
+      <label class="set-row field-row"><span>Tags</span><input type="text" id="infoTags" maxlength="300" placeholder="comma separated"></label>
+      <div class="set-label">Shelves</div>
+      <div class="shelf-chips" id="infoShelves"></div>
+      <p class="info-note">Inside the EPUB: <span id="infoEpub"></span></p>
+    </div>
+    <div class="pop-row info-row">
+      <button class="btn ghost" id="infoReset">Use EPUB details</button>
+      <span class="grow"></span>
+      <button class="btn primary" id="infoSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="nameAsk" hidden>
+  <div class="modal-card">
+    <div class="drawer-head">
+      <strong id="nameAskTitle">New shelf</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="info-body">
+      <label class="set-row field-row"><span>Name</span><input type="text" id="nameAskInput" maxlength="60" autocomplete="off" spellcheck="false" placeholder="e.g. Fantasy, To read, Favorites of 2024"></label>
+    </div>
+    <div class="pop-row info-row">
+      <span class="grow"></span>
+      <button class="btn ghost" id="nameAskCancel">Cancel</button>
+      <button class="btn primary" id="nameAskOk">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="voiceLib" hidden>
+  <div class="modal-card voice-card">
+    <div class="drawer-head">
+      <div class="voice-title">
+        <strong>Voice packs</strong>
+        <span class="set-note">Free Piper voices, downloaded once and kept on this computer.</span>
+      </div>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="voice-tools">
+      <label class="voice-search">
+        <svg aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="search" id="voiceQuery" placeholder="Search a voice or a language" autocomplete="off" spellcheck="false" aria-label="Search voices">
+      </label>
+      <button class="select voice-filter" id="voiceLang" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
+        <span id="voiceLangLabel">All languages</span>
+        <svg class="chev" aria-hidden="true"><use href="#i-back"/></svg>
+      </button>
+      <button class="select voice-filter" id="voiceQuality" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Quality">
+        <span id="voiceQualityLabel">Any quality</span>
+        <svg class="chev" aria-hidden="true"><use href="#i-back"/></svg>
+      </button>
+    </div>
+    <div class="voice-jobs" id="voiceJobs" hidden></div>
+    <div class="voice-count" id="voiceCount">Getting voices…</div>
+    <div class="voice-list" id="voiceList"></div>
+    <div class="pop-row info-row">
+      <span class="set-note" id="voiceTip">Every voice runs on your CPU, so nothing is uploaded and it works offline.</span>
+      <span class="grow"></span>
+      <button class="btn primary" id="voiceLibDone">Done</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="help" hidden>
+  <div class="modal-card">
+    <div class="drawer-head"><strong>Keyboard shortcuts</strong><button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button></div>
+    <div class="keys">
+      <div><kbd>←</kbd><kbd>→</kbd><span>Previous / next chapter</span></div>
+      <div><kbd>Esc</kbd><span>Close panel, stop reading, or leave the reader</span></div>
+      <div><kbd>Ctrl</kbd><kbd>F</kbd><span>Search inside the book</span></div>
+      <div><kbd>T</kbd><span>Table of contents</span></div>
+      <div><kbd>I</kbd><span>Book details</span></div>
+      <div><kbd>S</kbd><span>Sepia reading theme</span></div>
+      <div><kbd>V</kbd><span>Read aloud from here</span></div>
+      <div><kbd>+</kbd><kbd>−</kbd><span>Text size</span></div>
+      <div><kbd>Ctrl</kbd><kbd>B</kbd><span>Back up the library</span></div>
+      <div><kbd>F</kbd><span>Favorite the book you are reading</span></div>
+      <div><kbd>?</kbd><span>This list</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lb-bar">
+    <span class="lb-name" id="lbName"></span>
+    <button class="btn lb-save" id="lbSave"><svg><use href="#i-download"/></svg>Save as…</button>
+    <button class="ic-btn lb-close" id="lbClose" title="Close (Esc)"><svg><use href="#i-close"/></svg></button>
+  </div>
+  <div class="lb-stage" id="lbStage"><img id="lbImg" alt=""></div>
+  <button class="lb-nav prev" id="lbPrev" title="Previous image"><svg><use href="#i-back"/></svg></button>
+  <button class="lb-nav next" id="lbNext" title="Next image"><svg><use href="#i-back"/></svg></button>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="dropzone" id="dropzone" hidden><div><svg><use href="#i-upload"/></svg><strong>Drop EPUB files to add them</strong></div></div>
+

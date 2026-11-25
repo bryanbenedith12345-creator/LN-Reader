@@ -1,9 +1,9 @@
-/* Yolala's LN Reader - reader settings, themes and sepia.
-   Classic script: loaded in order from index.html; shared globals. */
+/* Yolala's LN Reader - reading settings, per-book overrides and the titlebar. */
 'use strict';
 
-/* ------------------------------------------------------------- settings -- */
 let titlebarKey = '';
+let scope = 'global';          // 'global' or 'book'
+
 function syncTitlebar() {
   const api = window.pywebview && window.pywebview.api;
   if (!api || typeof api.set_titlebar !== 'function') return;
@@ -25,8 +25,23 @@ function syncTitlebar() {
   } catch (_) { titlebarKey = ''; /* browser fallback has no pywebview bridge */ }
 }
 
+/* ----------------------------------------------------------- book scope -- */
+function bookOverrides(bookId) {
+  const book = S.books.find((b) => b.id === bookId);
+  return (book && book.settings) || {};
+}
+function effectiveSettings() {
+  if (scope === 'book' && R.id) return { ...S.settings, ...bookOverrides(R.id) };
+  return { ...S.settings };
+}
+function hasBookScope() {
+  return !!(R.id && Object.keys(bookOverrides(R.id)).length);
+}
+
+/* -------------------------------------------------------------- applying -- */
 function applySettings(persist = true) {
-  const s = S.settings, root = document.documentElement;
+  const s = effectiveSettings();
+  const root = document.documentElement;
   root.dataset.theme = s.theme;
   if (s.theme !== SEPIA) {
     localStorage.setItem('ln.baseTheme', s.theme);
@@ -38,61 +53,64 @@ function applySettings(persist = true) {
   root.style.setProperty('--rd-width', s.width + 'px');
   root.style.setProperty('--rd-font', s.font === 'sans' ? 'var(--sans)' : 'var(--serif)');
   root.style.setProperty('--rd-align', s.justify ? 'justify' : 'left');
-  $('#setSize').value = s.size; $('#outSize').textContent = s.size;
+  const sort = $('#libSort');
+  if (sort) sort.value = localStorage.getItem('ln.sort') || 'recent';
+  syncSettingsControls(s);
+  updateThemeButtons();
+  syncTitlebar();
+  if (persist) saveScope();
+}
+
+function syncSettingsControls(s) {
+  const size = $('#setSize');
+  if (!size) return;                      // settings drawer not mounted
+  size.value = s.size; $('#outSize').textContent = s.size;
   $('#setLh').value = s.lh; $('#outLh').textContent = Number(s.lh).toFixed(2);
   $('#setWidth').value = s.width; $('#outWidth').textContent = s.width;
   $('#setJustify').checked = !!s.justify;
-  $('#libSort').value = localStorage.getItem('ln.sort') || 'recent';
   $$('#fontSeg button').forEach((b) => b.classList.toggle('on', b.dataset.font === s.font));
   $$('.theme-tile').forEach((t) => t.classList.toggle('on', t.dataset.theme === s.theme));
-  updateThemeButtons();
-  syncTitlebar();
-  if (persist) {
-    clearTimeout(applySettings.timer);
-    applySettings.timer = setTimeout(() => postJSON('/api/settings', s).catch(() => {}), 500);
+  const scopeBtn = $('#setScope');
+  if (scopeBtn) {
+    scopeBtn.disabled = !R.id;
+    scopeBtn.checked = scope === 'book';
+    scopeBtn.closest('.set-row').hidden = !R.id;
   }
 }
+
+/* --------------------------------------------------------------- saving -- */
+function saveScope() {
+  if (scope === 'book' && R.id) {
+    const book = S.books.find((b) => b.id === R.id);
+    const merged = { ...S.settings, ...(book ? book.settings : {}) };
+    if (book) book.settings = { ...merged };
+    postJSON('/api/book-settings', { book: R.id, settings: merged }).catch(() => {});
+  } else {
+    clearTimeout(applySettings.timer);
+    applySettings.timer = setTimeout(() => postJSON('/api/settings', S.settings).catch(() => {}), 500);
+  }
+}
+
 function updateSetting(key, value, keepScroll = true) {
   const ratio = isOpen && R.ready ? currentRatio() : null;
-  S.settings[key] = value;
+  if (scope === 'book' && R.id) {
+    const book = S.books.find((b) => b.id === R.id);
+    if (book) book.settings = { ...effectiveSettings(), [key]: value };
+  } else {
+    S.settings[key] = value;
+  }
   applySettings();
   if (ratio !== null && keepScroll) requestAnimationFrame(() => restoreScroll(ratio));
 }
-function baseTheme() {
-  const saved = localStorage.getItem('ln.baseTheme');
-  return THEMES.some((t) => t.id === saved && t.id !== SEPIA) ? saved : 'cupertino';
-}
-function setTheme(id) {
-  const ratio = isOpen && R.ready ? currentRatio() : null;
-  S.settings.theme = id;
+
+function toggleScope(on) {
+  if (!R.id) return;
+  scope = on ? 'book' : 'global';
+  if (scope === 'book') {
+    // start the override from what the reader sees right now
+    const merged = { ...S.settings, ...bookOverrides(R.id) };
+    const book = S.books.find((b) => b.id === R.id);
+    if (book) book.settings = { ...merged };
+  }
   applySettings();
-  if (ratio !== null) requestAnimationFrame(() => restoreScroll(ratio));
-}
-function toggleSepia() {
-  setTheme(S.settings.theme === SEPIA ? baseTheme() : SEPIA);
-}
-function updateThemeButtons() {
-  const on = S.settings.theme === SEPIA;
-  const icon = on ? '#i-moon' : '#i-sun';
-  $$('#btnSepia, #rTheme').forEach((btn) => {
-    btn.classList.toggle('is-on', on);
-    const use = btn.querySelector('use');
-    if (use) use.setAttribute('href', icon);
-  });
-  const side = $('#btnSepia');
-  side.title = on ? 'Sepia theme is on — click to go back (S)' : 'Switch to the sepia reading theme (S)';
-  side.querySelector('span').textContent = on ? 'Exit sepia' : 'Sepia theme';
-  $('#rTheme').title = on ? 'Turn off sepia (S)' : 'Sepia theme (S)';
-}
-function renderThemes() {
-  const grid = $('#themeGrid');
-  grid.innerHTML = THEMES.map((t) => `
-    <button class="theme-tile" data-theme="${t.id}" title="${esc(t.name)}">
-      <span class="sw3"><i style="background:${t.bg}"></i><i style="background:${t.panel}"></i><i style="background:${t.accent}"></i></span>
-      <span>${esc(t.name)}</span>
-    </button>`).join('');
-  grid.onclick = (e) => {
-    const tile = e.target.closest('.theme-tile');
-    if (tile) setTheme(tile.dataset.theme);
-  };
 }

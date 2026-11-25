@@ -95,7 +95,7 @@ def native_window(url: str) -> bool:
         api = TitlebarApi()
         window = webview.create_window(
             "Yolala's LN Reader", url, width=1440, height=920, min_size=(980, 620),
-            background_color="#111113", js_api=api,
+            maximized=True, background_color="#111113", js_api=api,
         )
 
         def remember_window() -> None:

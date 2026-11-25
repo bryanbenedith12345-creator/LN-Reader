@@ -1,30 +1,6 @@
-/* Yolala's LN Reader - library shelf, covers and delete flow.
-   Classic script: loaded in order from index.html; shared globals. */
+/* Yolala's LN Reader - the shelf: covers, sorting, searching and removal. */
 'use strict';
 
-/* -------------------------------------------------------------- library -- */
-async function loadLibrary() {
-  const data = await getJSON('/api/library');
-  S.books = data.books || [];
-  S.highlights = data.highlights || [];
-  S.bookmarks = data.bookmarks || [];
-  S.stats = data.stats || {};
-  S.settings = { ...DEFAULTS, ...(data.settings || {}) };
-  applySettings(false);
-  renderLibrary();
-  renderHighlightFilters();
-  renderHighlights();
-  updateCounts();
-}
-function readCount() {
-  return S.books.reduce((total, book) => total + ((book.progress && book.progress.read) || []).length, 0);
-}
-function updateCounts() {
-  $('#navCount').textContent = S.books.length || '';
-  $('#hlNavCount').textContent = S.highlights.length || '';
-  $('#sideFoot').innerHTML = `<b>${S.books.length}</b> books · <b>${S.highlights.length}</b> highlights<br>` +
-    `<b>${readCount()}</b> chapters read · <b>${fmtWords(S.stats.words || 0)}</b> words`;
-}
 function hydrateCovers(root) {
   $$('.cover img', root).forEach((img) => {
     const settle = () => img.classList.add('loaded');
@@ -37,26 +13,65 @@ function hydrateCovers(root) {
     if (img.complete && img.naturalWidth) settle();
   });
 }
+
 function coverHTML(book, extra = '') {
   return `<div class="cover ${extra}">` +
     `<div class="cover-gen">${esc(book.title)}</div>` +
     (book.cover ? `<img src="/api/cover/${book.id}" alt="" loading="lazy">` : '') +
     `<div class="cover-prog"><i style="width:${bookPct(book).toFixed(1)}%"></i></div></div>`;
 }
-function renderLibrary() {
-  const query = $('#libSearch').value.trim().toLowerCase();
-  const sort = $('#libSort').value;
-  const list = S.books
-    .filter((b) => !query || (b.title + ' ' + b.author).toLowerCase().includes(query))
-    .sort((a, b) => {
-      if (sort === 'added') return (b.added || 0) - (a.added || 0);
-      if (sort === 'title') return a.title.localeCompare(b.title);
-      if (sort === 'author') return a.author.localeCompare(b.author) || a.title.localeCompare(b.title);
-      if (sort === 'progress') return bookPct(b) - bookPct(a);
-      return ((b.progress || {}).updated || b.added || 0) - ((a.progress || {}).updated || a.added || 0);
-    });
 
-  const last = S.books.filter((b) => b.progress && b.progress.updated)
+function bookById(id) {
+  return S.books.find((b) => b.id === id);
+}
+
+function sortBooks(list) {
+  const sort = $('#libSort').value;
+  return list.sort((a, b) => {
+    if (sort === 'added') return (b.added || 0) - (a.added || 0);
+    if (sort === 'title') return a.title.localeCompare(b.title);
+    if (sort === 'author') return a.author.localeCompare(b.author) || a.title.localeCompare(b.title);
+    if (sort === 'progress') return bookPct(b) - bookPct(a);
+    return ((b.progress || {}).updated || b.added || 0) - ((a.progress || {}).updated || a.added || 0);
+  });
+}
+
+function cardHTML(book) {
+  const fav = S.favorites.includes(book.id);
+  const pick = picked.has(book.id);
+  const favLabel = fav ? 'Remove from favorites' : 'Add to favorites';
+  return `
+    <div class="card${pick ? ' is-picked' : ''}" data-id="${book.id}" tabindex="0" role="button"
+         aria-label="${esc(book.title)}" draggable="${!selectMode}">
+      <div class="cover">
+        <div class="cover-gen">${esc(book.title)}</div>
+        ${book.cover ? `<img src="/api/cover/${book.id}" alt="" loading="lazy">` : ''}
+        <button class="card-fav${fav ? ' is-on' : ''}" data-fav="${book.id}" title="${favLabel}" aria-label="${favLabel}">
+          <svg><use href="#i-heart"/></svg>
+        </button>
+        <div class="card-tools">
+          <button class="card-tool" data-info="${book.id}" title="Book details" aria-label="Details for ${esc(book.title)}">
+            <svg><use href="#i-info"/></svg>
+          </button>
+          <button class="card-del" data-del="${book.id}" title="Remove book" aria-label="Remove ${esc(book.title)}">
+            <svg><use href="#i-trash"/></svg>
+          </button>
+        </div>
+        ${selectMode ? `<span class="card-pick"><input type="checkbox" data-pick="${book.id}" ${pick ? 'checked' : ''} aria-label="Select ${esc(book.title)}"></span>` : ''}
+        <div class="cover-prog"><i style="width:${bookPct(book).toFixed(1)}%"></i></div>
+      </div>
+      <div class="card-meta">
+        <span class="card-title">${esc(book.title)}</span>
+        <span class="card-author">${esc(book.author)}</span>
+      </div>
+    </div>`;
+}
+
+function renderContinue() {
+  const pool = shelf === 'all' ? S.books
+    : shelf === 'favorites' ? S.books.filter((b) => S.favorites.includes(b.id))
+    : S.books.filter((b) => (S.collectionBooks[shelf] || []).includes(b.id));
+  const last = pool.filter((b) => b.progress && b.progress.updated)
     .sort((a, b) => b.progress.updated - a.progress.updated)[0];
   $('#continueWrap').innerHTML = !last ? '' : `
     <div class="continue" data-id="${last.id}">
@@ -70,52 +85,53 @@ function renderLibrary() {
       <button class="btn primary" data-act="resume">Resume</button>
     </div>`;
   hydrateCovers($('#continueWrap'));
+}
+
+function renderLibrary() {
+  const query = $('#libSearch').value.trim().toLowerCase();
+  const ids = shelfIds();
+  const pool = ids ? S.books.filter((b) => ids.has(b.id)) : S.books;
+  const list = sortBooks(pool.filter((b) =>
+    !query || (b.title + ' ' + b.author + ' ' + (b.tags || []).join(' ')).toLowerCase().includes(query)));
+
+  renderContinue();
 
   const grid = $('#grid');
-  grid.innerHTML = list.map((b) => `
-    <div class="card" data-id="${b.id}" tabindex="0" role="button" aria-label="${esc(b.title)}">
-      ${coverHTML(b)}
-      <button class="card-del" data-del="${b.id}" title="Remove book" aria-label="Remove ${esc(b.title)}">
-        <svg><use href="#i-trash"/></svg>
-      </button>
-      <div class="card-meta">
-        <span class="card-title">${esc(b.title)}</span>
-        <span class="card-author">${esc(b.author)}</span>
-      </div>
-    </div>`).join('');
+  grid.innerHTML = list.map(cardHTML).join('') || (query
+    ? `<div class="find-note">No books match “${esc(query)}”${shelf === 'all' ? '' : ' on this shelf'}.</div>`
+    : '');
 
-  if (!list.length && S.books.length) {
-    grid.innerHTML = `<div class="find-note">No books match “${esc(query)}”.</div>`;
+  const noBooks = S.books.length === 0;
+  const emptyShelf = !noBooks && pool.length === 0;
+  if (emptyShelf) {
+    $('#shelfEmptyTitle').textContent = shelf === 'favorites' ? 'No favorites yet' : `“${shelfName()}” is empty`;
+    $('#shelfEmptyText').innerHTML = shelf === 'favorites'
+      ? 'Tap the heart on any book and it stays here, ready to find again.'
+      : 'Drag books onto this shelf, or pick several with <b>Select</b> and add them all at once.';
   }
-  $('#empty').hidden = S.books.length > 0;
-  $('#grid').hidden = S.books.length === 0;
-  $('#libSub').textContent = S.books.length
-    ? `${S.books.length} book${S.books.length === 1 ? '' : 's'} on the shelf`
-    : 'Your shelf';
+  $('#empty').hidden = !noBooks;
+  $('#shelfEmpty').hidden = !emptyShelf;
+  grid.hidden = noBooks;
+  $('#libTitle').textContent = shelfName();
+  $('#libSub').textContent = noBooks ? 'Your shelf'
+    : shelf === 'all' ? `${pool.length} book${pool.length === 1 ? '' : 's'} on the shelf`
+    : `${pool.length} book${pool.length === 1 ? '' : 's'} ${shelf === 'favorites' ? 'hearted' : 'saved here'}`;
 
   hydrateCovers(grid);
 }
+
 function confirmDelete(book) {
   toast(`Remove “${book.title}” from your library?`, {
     timeout: 8000,
     action: {
       label: 'Remove', danger: true, fn: async () => {
         try {
-          const lib = await postJSON('/api/delete', { book: book.id });
+          await postJSON('/api/delete', { book: book.id });
           metaCache.delete(book.id);
-          S.books = lib.books; S.highlights = lib.highlights; S.stats = lib.stats;
-          renderLibrary(); renderHighlightFilters(); renderHighlights(); updateCounts();
+          await loadLibrary();
           toast('Book removed');
         } catch (err) { toast('Could not remove: ' + err.message); }
       },
     },
   });
-}
-
-/* ---------------------------------------------------------------- views -- */
-function setView(name) {
-  view = name;
-  $$('.nav-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.view === name));
-  $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === 'view-' + name));
-  if (name === 'highlights') renderHighlights();
 }

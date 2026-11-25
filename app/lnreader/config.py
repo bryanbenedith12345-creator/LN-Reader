@@ -12,14 +12,19 @@ from urllib.parse import quote
 
 BASE = Path(__file__).resolve().parent.parent
 UI = BASE / "ui"
-ROOT = BASE.parent
-DATA = ROOT / "data"
+ROOT = Path(os.environ.get("LN_READER_HOME", BASE.parent))
+DATA = Path(os.environ.get("LN_READER_DATA", ROOT / "data"))
 BOOKS = DATA / "books"
 CACHE = DATA / "cache"
 BACKUPS = DATA / "backups"
 STATE_FILE = DATA / "state.json"
+TOKEN_FILE = DATA / "token.txt"
 WPM = 230
 META_VERSION = 5
+
+# Fields a reader may override per book (the EPUB values stay untouched).
+INFO_FIELDS = ("title", "author", "series")
+TAGS_MAX = 12
 
 
 
@@ -67,7 +72,10 @@ class Store:
             "books": {},
             "progress": {},
             "highlights": [],
-            "bookmarks": [],
+            "favorites": [],
+            "collections": [],
+            "collection_books": {},
+            "book_settings": {},
             "settings": dict(DEFAULT_SETTINGS),
             "created": time.time(),
         }

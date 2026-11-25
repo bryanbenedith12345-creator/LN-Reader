@@ -1,0 +1,152 @@
+<!-- Reader -->
+<div class="reader" id="reader" hidden>
+  <header class="rbar">
+    <button class="ic-btn" id="rBack" title="Back to library (Esc)"><svg><use href="#i-back"/></svg></button>
+    <div class="rbar-title">
+      <strong id="rTitle"></strong>
+      <button class="r-chapter" id="rChapterBtn" title="Table of contents (T)"><span id="rChapter"></span><svg class="chev"><use href="#i-back"/></svg></button>
+    </div>
+    <div class="rbar-actions">
+      <button class="ic-btn" id="rInfo" title="Book details (I)"><svg><use href="#i-info"/></svg></button>
+      <button class="ic-btn" id="rTheme" title="Sepia theme (S)"><svg><use href="#i-sun"/></svg></button>
+      <button class="ic-btn" id="rFind" title="Search in book (Ctrl+F)"><svg><use href="#i-search"/></svg></button>
+      <button class="ic-btn" id="rFav" title="Favorite this book"><svg><use href="#i-heart"/></svg></button>
+      <button class="ic-btn" id="rTts" title="Read aloud (V)"><svg><use href="#i-speaker"/></svg></button>
+      <button class="ic-btn" id="rSettings" title="Reading settings"><svg><use href="#i-sliders"/></svg></button>
+    </div>
+  </header>
+  <div class="rprog"><i id="rProgFill"></i></div>
+
+  <div class="rscroll" id="rScroll">
+    <div class="rwrap">
+      <article class="chapter" id="rBody"></article>
+      <footer class="rfoot" id="rFoot"></footer>
+    </div>
+  </div>
+
+  <button class="rnav prev" id="rPrev" title="Previous chapter (←)"><svg><use href="#i-back"/></svg></button>
+  <button class="rnav next" id="rNext" title="Next chapter (→)"><svg><use href="#i-back"/></svg></button>
+  <div class="rbottom"><span id="rPos"></span><span class="dot">·</span><span id="rTime"></span></div>
+  <button class="tts-chip" id="ttsChip" type="button" hidden>
+    <span class="tts-chip-name" id="ttsChipName"></span>
+    <span class="tts-chip-pct" id="ttsChipPct"></span>
+    <span class="tts-chip-bar"><i id="ttsChipFill"></i></span>
+  </button>
+
+  <div class="tts-dock" id="ttsDock" hidden>
+    <i class="tts-prog" id="ttsProg"></i>
+    <button class="tts-play" id="ttsPlay" title="Play"><svg><use href="#i-play"/></svg></button>
+    <div class="tts-now">
+      <span class="tts-label" id="ttsLabel"></span>
+      <span class="tts-meta" id="ttsMeta"></span>
+    </div>
+    <div class="tts-acts">
+      <button class="tts-btn" id="ttsPrev" title="Previous"><svg><use href="#i-back"/></svg></button>
+      <button class="tts-btn" id="ttsNext" title="Next"><svg class="flip"><use href="#i-back"/></svg></button>
+      <button class="tts-btn" id="ttsCfg" title="Voice & settings"><svg><use href="#i-sliders"/></svg></button>
+      <button class="tts-btn" id="ttsStop" title="Stop"><svg><use href="#i-close"/></svg></button>
+    </div>
+  </div>
+
+  <aside class="drawer" id="dToc" hidden>
+    <div class="drawer-head">
+      <strong>Contents</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <label class="field search flat">
+      <svg><use href="#i-search"/></svg>
+      <input id="tocFilter" type="search" placeholder="Filter chapters" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="drawer-body" id="tocList"></div>
+  </aside>
+
+  <aside class="drawer" id="dFind" hidden>
+    <div class="drawer-head">
+      <strong>Search in book</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <label class="field search flat">
+      <svg><use href="#i-search"/></svg>
+      <input id="findInput" type="search" placeholder="Find in this book" autocomplete="off" spellcheck="false">
+    </label>
+    <div class="find-sub" id="findSub">Highlights in this book</div>
+    <div class="chips find-chips" id="findColors" hidden></div>
+    <div class="drawer-body" id="findList"></div>
+  </aside>
+
+  <aside class="drawer" id="dSet" hidden>
+    <div class="drawer-head">
+      <strong>Reading settings</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="drawer-body settings">
+      <div class="set-label">Theme</div>
+      <div class="theme-grid" id="themeGrid"></div>
+      <div class="set-label">Typeface</div>
+      <div class="seg" id="fontSeg">
+        <button data-font="serif">Serif</button>
+        <button data-font="sans">Sans</button>
+      </div>
+      <label class="set-row"><span>Text size</span><input type="range" id="setSize" min="15" max="27" step="1"><output id="outSize"></output></label>
+      <label class="set-row"><span>Line height</span><input type="range" id="setLh" min="1.4" max="2.2" step="0.02"><output id="outLh"></output></label>
+      <label class="set-row"><span>Page width</span><input type="range" id="setWidth" min="520" max="900" step="10"><output id="outWidth"></output></label>
+      <label class="set-row"><span>Justified text</span><input type="checkbox" id="setJustify" class="switch"></label>
+      <label class="set-row" hidden><span>For this book</span><input type="checkbox" id="setScope" class="switch"></label>
+      <button class="btn ghost wide" id="setReset">Reset to defaults</button>
+    </div>
+  </aside>
+
+  <aside class="drawer" id="dTts" hidden>
+    <div class="drawer-head">
+      <strong>Read aloud</strong>
+      <button class="ic-btn small" data-close><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="drawer-body settings">
+      <p class="set-note">Click a sentence in the book to pick it up, or press V to start from the page.</p>
+      <div class="set-label">Voice</div>
+      <button class="select tts-pick" id="ttsVoice" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Speech voice">
+        <span class="tts-pick-label" id="ttsVoiceLabel">System default</span>
+        <svg class="chev" aria-hidden="true"><use href="#i-back"/></svg>
+      </button>
+      <p class="set-note" id="ttsVoiceNote">Looking for voices…</p>
+      <div class="set-label">Voice packs</div>
+      <div class="tts-packs" id="ttsPacks"></div>
+      <button class="btn ghost wide" id="ttsAddPack">Add a voice</button>
+      <div class="set-label">Read by</div>
+      <div class="seg" id="ttsMode">
+        <button data-mode="sentence">Sentence</button>
+        <button data-mode="paragraph">Paragraph</button>
+      </div>
+      <label class="set-row"><span>Speed</span><input type="range" id="ttsRate" min="0.5" max="2" step="0.05"><output id="ttsRateOut"></output></label>
+      <label class="set-row"><span>Pitch</span><input type="range" id="ttsPitch" min="0.5" max="1.5" step="0.05"><output id="ttsPitchOut"></output></label>
+      <label class="set-row"><span>Volume</span><input type="range" id="ttsVolume" min="0" max="1" step="0.05"><output id="ttsVolumeOut"></output></label>
+      <div class="set-label">Punctuation</div>
+      <label class="set-row"><span>Skip commas</span><input type="checkbox" id="ttsComma" class="switch"></label>
+      <label class="set-row"><span>Skip full stops</span><input type="checkbox" id="ttsPeriod" class="switch"></label>
+      <label class="set-row"><span>Other marks</span><input type="checkbox" id="ttsOther" class="switch"></label>
+      <div class="set-label">While reading</div>
+      <label class="set-row"><span>Highlight words</span><input type="checkbox" id="ttsWord" class="switch"></label>
+      <label class="set-row"><span>Follow along</span><input type="checkbox" id="ttsFollow" class="switch"></label>
+      <button class="btn ghost wide" id="ttsTest">Test voice</button>
+    </div>
+  </aside>
+
+  <div class="selbar" id="selBar" hidden>
+    <div class="swatches" id="selColors"></div>
+    <span class="sel-div"></span>
+    <button class="sel-act" id="selRead" title="Read from here"><svg><use href="#i-speaker"/></svg></button>
+    <button class="sel-act" id="selCopy" title="Copy text"><svg><use href="#i-mark"/></svg></button>
+  </div>
+
+  <div class="pop" id="hlPop" hidden>
+    <div class="swatches" id="popColors"></div>
+    <textarea id="popNote" rows="2" placeholder="Add a note…" spellcheck="true"></textarea>
+    <div class="pop-row">
+      <button class="link" data-act="copy">Copy</button>
+      <button class="link" data-act="read">Read aloud</button>
+      <span class="grow"></span>
+      <button class="link danger" data-act="del">Delete</button>
+    </div>
+  </div>
+</div>
+
